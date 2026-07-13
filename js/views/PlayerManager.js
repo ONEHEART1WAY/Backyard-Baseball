@@ -4,11 +4,13 @@ export class PlayerManager {
     constructor(container) {
         this.container = container;
         this.currentEditId = null;
+        this.unsubscribes = [];
+        
         this.render();
         
-        // Bind to store updates
-        store.subscribe('playersUpdated', () => this.renderList());
-        store.subscribe('teamsUpdated', () => this.populateTeamDropdown());
+        this.unsubscribes.push(store.subscribe('playersUpdated', () => this.renderList()));
+        this.unsubscribes.push(store.subscribe('teamsUpdated', () => this.populateTeamDropdown()));
+        this.unsubscribes.push(store.subscribe('rostersUpdated', () => this.renderList()));
     }
 
     render() {
@@ -217,5 +219,9 @@ export class PlayerManager {
         this.container.querySelector('#player-bats').value = 'R';
         this.container.querySelector('#player-throws').value = 'R';
         this.container.querySelector('#player-position').value = 'P';
+    }
+
+    destroy() {
+        this.unsubscribes.forEach(unsub => unsub());
     }
 }
