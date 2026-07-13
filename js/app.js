@@ -1,7 +1,7 @@
 import { store } from './core/Store.js';
 import { Dashboard } from './views/Dashboard.js';
 import { TeamManager } from './views/TeamManager.js';
-// import { PlayerManager } from './views/PlayerManager.js'; // Skeleton prepared
+import { PlayerManager } from './views/PlayerManager.js'; // Skeleton prepared
 
 class App {
     constructor() {
@@ -59,7 +59,7 @@ class App {
                 break;
             case 'players':
                 this.viewContainer.innerHTML = '<div class="empty-state">Player Manager Module Loading...</div>';
-                // this.currentView = new PlayerManager(this.viewContainer);
+                this.currentView = new PlayerManager(this.viewContainer);
                 break;
             case 'settings':
                 this.viewContainer.innerHTML = '<div class="empty-state">Settings Module Loading...</div>';
