@@ -4,10 +4,11 @@ export class TeamManager {
     constructor(container) {
         this.container = container;
         this.currentEditId = null;
+        this.unsubscribes = [];
+        
         this.render();
         
-        // Bind to store updates
-        store.subscribe('teamsUpdated', () => this.renderList());
+        this.unsubscribes.push(store.subscribe('teamsUpdated', () => this.renderList()));
     }
 
     render() {
@@ -123,5 +124,9 @@ export class TeamManager {
         this.container.querySelector('#team-form').reset();
         this.container.querySelector('#team-id').value = '';
         this.container.querySelector('#btn-delete-team').style.display = 'none';
+    }
+
+    destroy() {
+        this.unsubscribes.forEach(unsub => unsub());
     }
 }
