@@ -15,7 +15,7 @@ class Store {
         };
 
         this.load();
-
+    }
     getPlayers() {
         return this.data.players || [];
     }
@@ -85,7 +85,6 @@ class Store {
             t => t.playerId === playerId && t.isActive
         );
         return assignment ? this.getTeamById(assignment.teamId) : null;
-    }
     }
 
     // --- PUB/SUB EVENT SYSTEM ---
