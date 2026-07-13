@@ -11,7 +11,6 @@ export class Scorekeeper {
         this.render();
         this.updateBoard();
 
-        // Listen ONLY to events for this specific game
         this.unsubscribes.push(store.subscribe(`gameEventAdded_${this.gameId}`, () => {
             this.updateBoard();
         }));
@@ -22,8 +21,8 @@ export class Scorekeeper {
         const homeTeam = store.getTeamById(this.game.homeTeamId);
 
         this.container.innerHTML = `
-            <div style="max-width: 800px; margin: 0 auto;">
-                <!-- SCOREBOARD -->
+            <div style="max-width: 1000px; margin: 0 auto;">
+                
                 <div class="scoreboard">
                     <div class="score-team">
                         <h3>${awayTeam ? awayTeam.nickname : 'Away'}</h3>
@@ -47,15 +46,40 @@ export class Scorekeeper {
                     </div>
                 </div>
 
-                <!-- CONTROLS -->
-                <div class="scoring-grid">
-                    <button class="btn-score btn-pitch" data-type="pitch" data-detail="ball">Ball</button>
-                    <button class="btn-score btn-pitch" data-type="pitch" data-detail="strike">Strike</button>
-                    <button class="btn-score btn-pitch" data-type="pitch" data-detail="foul">Foul</button>
-                    <button class="btn-score btn-hit" data-type="play" data-detail="single">Single</button>
-                    <button class="btn-score btn-out" data-type="play" data-detail="out">Out</button>
-                    <button class="btn-score btn-undo" id="btn-undo">Undo Last</button>
+                <div class="scorekeeper-layout">
+                    <div class="scoring-panel">
+                        <div class="scoring-grid advanced">
+                            <!-- Pitches -->
+                            <button class="btn-score btn-pitch" data-type="pitch" data-detail="ball">Ball</button>
+                            <button class="btn-score btn-pitch" data-type="pitch" data-detail="strike">Strike</button>
+                            <button class="btn-score btn-pitch" data-type="pitch" data-detail="foul">Foul</button>
+                            
+                            <!-- Hits -->
+                            <button class="btn-score btn-hit" data-type="play" data-detail="single">1B (Single)</button>
+                            <button class="btn-score btn-hit" data-type="play" data-detail="double">2B (Double)</button>
+                            <button class="btn-score btn-hit" data-type="play" data-detail="triple">3B (Triple)</button>
+                            <button class="btn-score btn-hit" style="grid-column: span 3;" data-type="play" data-detail="hr">Home Run</button>
+
+                            <!-- Outs & Actions -->
+                            <button class="btn-score btn-out" data-type="play" data-detail="out">Out in Play</button>
+                            <button class="btn-score btn-out" data-type="play" data-detail="dp">Double Play</button>
+                            <button class="btn-score btn-action" data-type="play" data-detail="error">Error</button>
+                            
+                            <!-- Baserunning -->
+                            <button class="btn-score btn-action" data-type="play" data-detail="steal">Steal</button>
+                            <button class="btn-score btn-action" data-type="pitch" data-detail="wp">Wild Pitch</button>
+                            <button class="btn-score btn-undo" id="btn-undo">Undo Last</button>
+                        </div>
+                    </div>
+
+                    <div class="pbp-panel">
+                        <h4>Play-by-Play</h4>
+                        <ul id="pbp-list" class="pbp-list">
+                            <div class="empty-state" style="margin-top: 20px;">Awaiting first pitch...</div>
+                        </ul>
+                    </div>
                 </div>
+
             </div>
         `;
 
@@ -63,27 +87,32 @@ export class Scorekeeper {
     }
 
     updateBoard() {
-        // 1. Get all events
         const events = store.getEventsForGame(this.gameId);
-        // 2. Calculate State via Engine
-        const state = BaseballEngine.calculateState(events);
+        const { state, logs } = BaseballEngine.calculateState(events); // Now destructuring both!
 
-        // 3. Update DOM
+        // Update Scoreboard DOM
         this.container.querySelector('#away-score').textContent = state.awayScore;
         this.container.querySelector('#home-score').textContent = state.homeScore;
         this.container.querySelector('#inning-text').textContent = `${state.half} ${state.inning}`;
         this.container.querySelector('#count-text').textContent = `${state.balls}-${state.strikes}`;
         this.container.querySelector('#outs-text').textContent = `${state.outs} Outs`;
 
-        // Update Bases
         this.container.querySelector('#base-1').classList.toggle('occupied', state.bases[1]);
         this.container.querySelector('#base-2').classList.toggle('occupied', state.bases[2]);
         this.container.querySelector('#base-3').classList.toggle('occupied', state.bases[3]);
+
+        // Update Play-by-Play DOM
+        const pbpList = this.container.querySelector('#pbp-list');
+        if (logs.length === 0) {
+            pbpList.innerHTML = `<div class="empty-state" style="margin-top: 20px;">Awaiting first pitch...</div>`;
+        } else {
+            pbpList.innerHTML = logs.map(log => `<li class="pbp-item ${log.type}">${log.text}</li>`).join('');
+        }
     }
 
     attachEventListeners() {
         this.container.querySelectorAll('.btn-score').forEach(btn => {
-            if(btn.id === 'btn-undo') return; // Handled separately
+            if(btn.id === 'btn-undo') return; 
             
             btn.addEventListener('click', (e) => {
                 const type = e.currentTarget.dataset.type;
