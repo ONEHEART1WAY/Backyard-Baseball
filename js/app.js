@@ -1,7 +1,7 @@
 import { store } from './core/Store.js';
 import { Dashboard } from './views/Dashboard.js';
 import { TeamManager } from './views/TeamManager.js';
-import { PlayerManager } from './views/PlayerManager.js'; // Skeleton prepared
+import { PlayerManager } from './views/PlayerManager.js';
 
 class App {
     constructor() {
@@ -20,8 +20,9 @@ class App {
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const route = e.target.dataset.route;
-                this.navigate(route, e.target);
+                // FIX: Use currentTarget to ensure we always get the <a> tag
+                const route = e.currentTarget.dataset.route; 
+                this.navigate(route, e.currentTarget);
             });
         });
 
@@ -46,6 +47,11 @@ class App {
         // Update Title
         this.viewTitle.textContent = activeElement.textContent;
 
+        // FIX: Clean up the old view before destroying its HTML
+        if (this.currentView && typeof this.currentView.destroy === 'function') {
+            this.currentView.destroy();
+        }
+
         // Clear current view
         this.viewContainer.innerHTML = '';
 
@@ -58,7 +64,6 @@ class App {
                 this.currentView = new TeamManager(this.viewContainer);
                 break;
             case 'players':
-                this.viewContainer.innerHTML = '<div class="empty-state">Player Manager Module Loading...</div>';
                 this.currentView = new PlayerManager(this.viewContainer);
                 break;
             case 'settings':
