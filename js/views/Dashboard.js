@@ -3,9 +3,12 @@ import { store } from '../core/Store.js';
 export class Dashboard {
     constructor(container) {
         this.container = container;
+        this.unsubscribes = [];
+        
         this.render();
-        store.subscribe('teamsUpdated', () => this.render());
-        store.subscribe('playersUpdated', () => this.render());
+        
+        this.unsubscribes.push(store.subscribe('teamsUpdated', () => this.render()));
+        this.unsubscribes.push(store.subscribe('playersUpdated', () => this.render()));
     }
 
     render() {
@@ -29,5 +32,9 @@ export class Dashboard {
                 <p style="color: var(--text-muted);">Event Bus: Active</p>
             </div>
         `;
+    }
+
+    destroy() {
+        this.unsubscribes.forEach(unsub => unsub());
     }
 }
