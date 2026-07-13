@@ -367,3 +367,66 @@ body {
     border: 1px dashed var(--text-muted);
     color: var(--text-muted);
 }
+.scorekeeper-layout {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.scoring-panel {
+    flex: 2;
+}
+
+.pbp-panel {
+    flex: 1;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+}
+
+.pbp-panel h4 {
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+}
+
+.pbp-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pbp-item {
+    font-size: 0.9rem;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #1a1a1a;
+    border-left: 3px solid #444;
+}
+
+.pbp-item.hit { border-left-color: var(--success); }
+.pbp-item.out { border-left-color: var(--danger); }
+.pbp-item.pitch { border-left-color: var(--accent-primary); }
+
+.scoring-grid.advanced {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.btn-score {
+    padding: 16px 12px; /* Slightly smaller for the advanced grid */
+    font-size: 1.1rem;
+}
+
+.btn-action { border-bottom: 4px solid var(--warning); }
