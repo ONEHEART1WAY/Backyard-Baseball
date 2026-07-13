@@ -15,6 +15,77 @@ class Store {
         };
 
         this.load();
+
+    getPlayers() {
+        return this.data.players || [];
+    }
+
+    getPlayerById(id) {
+        return this.data.players.find(p => p.id === id);
+    }
+
+    savePlayer(playerData) {
+        if (playerData.id) {
+            // Update existing
+            const index = this.data.players.findIndex(p => p.id === playerData.id);
+            if (index !== -1) {
+                this.data.players[index] = { ...this.data.players[index], ...playerData };
+            }
+        } else {
+            // Create new
+            const newPlayer = {
+                id: generateUUID(),
+                createdAt: Date.now(),
+                ...playerData
+            };
+            this.data.players.push(newPlayer);
+        }
+        this.publish('playersUpdated', this.data.players);
+    }
+
+    deletePlayer(id) {
+        this.data.players = this.data.players.filter(p => p.id !== id);
+        this.publish('playersUpdated', this.data.players);
+    }
+
+    // --- ROSTER API (Relational) ---
+
+    assignPlayerToTeam(playerId, teamId) {
+        if (!this.data.roster_transactions) this.data.roster_transactions = [];
+
+        // Close out any current active assignment for this player
+        const activeAssignment = this.data.roster_transactions.find(
+            t => t.playerId === playerId && t.isActive
+        );
+        
+        if (activeAssignment) {
+            if (activeAssignment.teamId === teamId) return; // Already on this team
+            activeAssignment.isActive = false;
+            activeAssignment.endDate = Date.now();
+        }
+
+        // Create new assignment if teamId is provided (not just releasing them)
+        if (teamId) {
+            this.data.roster_transactions.push({
+                id: generateUUID(),
+                playerId: playerId,
+                teamId: teamId,
+                startDate: Date.now(),
+                endDate: null,
+                isActive: true
+            });
+        }
+        
+        this.publish('rostersUpdated', this.data.roster_transactions);
+    }
+
+    getPlayerCurrentTeam(playerId) {
+        if (!this.data.roster_transactions) return null;
+        const assignment = this.data.roster_transactions.find(
+            t => t.playerId === playerId && t.isActive
+        );
+        return assignment ? this.getTeamById(assignment.teamId) : null;
+    }
     }
 
     // --- PUB/SUB EVENT SYSTEM ---
