@@ -631,14 +631,14 @@ body {
     position: relative;
     width: 34px;
     height: 34px;
-    transform: rotate(45deg); /* Tilts the squares into a diamond */
+    transform: rotate(45deg); /* Tilted 45 degrees to look like a diamond */
 }
 
 .diamond .base {
     position: absolute;
     width: 12px;
     height: 12px;
-    background: #333333; /* Empty base color */
+    background: #333333;
     border-radius: 2px;
     transition: background 0.2s ease;
 }
