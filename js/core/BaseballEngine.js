@@ -3,7 +3,7 @@ export class BaseballEngine {
         let state = {
             inning: 1, half: 'Top', outs: 0, balls: 0, strikes: 0,
             awayScore: 0, homeScore: 0, bases: { 1: false, 2: false, 3: false },
-            awayBatterIndex: 0, homeBatterIndex: 0 // Keep track of whose turn it is
+            awayBatterIndex: 0, homeBatterIndex: 0
         };
         let logs = [];
 
