@@ -22,45 +22,59 @@ export class Scorekeeper {
 
         const aBg = awayTeam?.primaryColor || '#222222';
         const aText = awayTeam?.secondaryColor || '#ffffff';
-        const aLogo = awayTeam?.logo ? `<img src="${awayTeam.logo}" class="team-logo-board">` : '';
+        const aLogo = awayTeam?.logo ? `<img src="${awayTeam.logo}" style="height: 40px; margin-right: 15px; z-index: 1;">` : '';
 
         const hBg = homeTeam?.primaryColor || '#222222';
         const hText = homeTeam?.secondaryColor || '#ffffff';
-        const hLogo = homeTeam?.logo ? `<img src="${homeTeam.logo}" class="team-logo-board">` : '';
+        const hLogo = homeTeam?.logo ? `<img src="${homeTeam.logo}" style="height: 40px; margin-left: 15px; z-index: 1;">` : '';
 
         this.container.innerHTML = `
-            <div style="max-width: 1000px; margin: 0 auto;">
+            <div style="max-width: 1200px; margin: 0 auto;">
                 
-                <div class="scoreboard">
-                    <div class="score-team" style="background-color: ${aBg}; border: 2px solid ${aText};">
-                        ${aLogo}
-                        <h3 style="color: ${aText};">${awayTeam ? awayTeam.nickname : 'Away'}</h3>
-                        <div class="score-number" id="away-score" style="color: ${aText};">0</div>
-                    </div>
-                    
-                    <div class="score-center">
-                        <div class="inning-display" id="inning-text">Top 1</div>
-                        <div class="count-outs-display">
-                            <span id="count-text">0-0</span>
-                            <span id="outs-text">0 Outs</span>
+                <!-- NEW PROFESSIONAL SCOREBUG -->
+                <div class="scorebug-container">
+                    <div class="scorebug" id="broadcast-scorebug">
+                        
+                        <div class="team-panel away" style="--team-color: ${aBg}; --text-color: ${aText};">
+                            ${aLogo}
+                            <div class="team-info">
+                                <span class="team-name">${awayTeam ? awayTeam.nickname : 'AWAY'}</span>
+                            </div>
+                            <div class="team-score" id="away-score">0</div>
                         </div>
-                        <div class="bases-display">
-                            <div class="base base-1" id="base-1"></div>
-                            <div class="base base-2" id="base-2"></div>
-                            <div class="base base-3" id="base-3"></div>
+                        
+                        <div class="game-info-panel">
+                            <div class="inning-display-pro">
+                                <span class="inning-text-pro" id="inning-text">TOP 1</span>
+                            </div>
+                            <div class="count-outs-pro">
+                                <span class="count-text-pro" id="count-text">0-0</span>
+                                <span class="outs-text-pro" id="outs-text">0 OUTS</span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="score-team" style="background-color: ${hBg}; border: 2px solid ${hText};">
-                        ${hLogo}
-                        <h3 style="color: ${hText};">${homeTeam ? homeTeam.nickname : 'Home'}</h3>
-                        <div class="score-number" id="home-score" style="color: ${hText};">0</div>
+
+                        <div class="diamond-panel">
+                            <div class="diamond">
+                                <div class="base base-2" id="base-2"></div>
+                                <div class="base base-3" id="base-3"></div>
+                                <div class="base base-1" id="base-1"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="team-panel home" style="--team-color: ${hBg}; --text-color: ${hText};">
+                            <div class="team-score" id="home-score">0</div>
+                            <div class="team-info" style="text-align: right;">
+                                <span class="team-name">${homeTeam ? homeTeam.nickname : 'HOME'}</span>
+                            </div>
+                            ${hLogo}
+                        </div>
+
                     </div>
                 </div>
+                <!-- END SCOREBUG -->
 
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
-                        
                         <div class="matchup-panel">
                             <div class="current-batter">
                                 <span class="label">Now Batting</span>
@@ -105,7 +119,6 @@ export class Scorekeeper {
     updateBoard() {
         const events = store.getEventsForGame(this.gameId);
         
-        // --- UPDATED: Pass the dynamic lineup lengths into the Engine ---
         const awayLen = this.game.awayLineup ? this.game.awayLineup.length : 1;
         const homeLen = this.game.homeLineup ? this.game.homeLineup.length : 1;
         
@@ -129,10 +142,15 @@ export class Scorekeeper {
         // Update Scoreboard Elements
         this.container.querySelector('#away-score').textContent = state.awayScore;
         this.container.querySelector('#home-score').textContent = state.homeScore;
-        this.container.querySelector('#inning-text').textContent = `${state.half} ${state.inning}`;
+        
+        // Formatted to look like a TV graphic (e.g., "TOP 1", "BOT 4")
+        this.container.querySelector('#inning-text').textContent = `${state.half.toUpperCase()} ${state.inning}`;
         this.container.querySelector('#count-text').textContent = `${state.balls}-${state.strikes}`;
-        this.container.querySelector('#outs-text').textContent = `${state.outs} Outs`;
+        
+        // Outs styling (e.g., "2 OUTS")
+        this.container.querySelector('#outs-text').textContent = state.outs === 1 ? '1 OUT' : `${state.outs} OUTS`;
 
+        // Update the glowing diamond bases
         this.container.querySelector('#base-1').classList.toggle('occupied', state.bases[1]);
         this.container.querySelector('#base-2').classList.toggle('occupied', state.bases[2]);
         this.container.querySelector('#base-3').classList.toggle('occupied', state.bases[3]);
@@ -141,10 +159,10 @@ export class Scorekeeper {
         if (logs.length === 0) {
             pbpList.innerHTML = `<div class="empty-state" style="margin-top: 20px;">Awaiting first pitch...</div>`;
         } else {
+            // Speed optimization: slice top 15 logs
             const recentLogs = logs.slice(0, 15);
             pbpList.innerHTML = recentLogs.map(log => `<li class="pbp-item ${log.type}">${log.text}</li>`).join('');
         }
-    }
     }
 
     attachEventListeners() {
