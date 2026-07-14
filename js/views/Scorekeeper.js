@@ -141,8 +141,10 @@ export class Scorekeeper {
         if (logs.length === 0) {
             pbpList.innerHTML = `<div class="empty-state" style="margin-top: 20px;">Awaiting first pitch...</div>`;
         } else {
-            pbpList.innerHTML = logs.map(log => `<li class="pbp-item ${log.type}">${log.text}</li>`).join('');
+            const recentLogs = logs.slice(0, 15);
+            pbpList.innerHTML = recentLogs.map(log => `<li class="pbp-item ${log.type}">${log.text}</li>`).join('');
         }
+    }
     }
 
     attachEventListeners() {
