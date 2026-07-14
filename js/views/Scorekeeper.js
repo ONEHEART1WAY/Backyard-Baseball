@@ -20,7 +20,6 @@ export class Scorekeeper {
         const awayTeam = store.getTeamById(this.game.awayTeamId);
         const homeTeam = store.getTeamById(this.game.homeTeamId);
 
-        // Fallbacks if team data is missing
         const aBg = awayTeam?.primaryColor || '#222222';
         const aText = awayTeam?.secondaryColor || '#ffffff';
         const aLogo = awayTeam?.logo ? `<img src="${awayTeam.logo}" class="team-logo-board">` : '';
@@ -61,6 +60,15 @@ export class Scorekeeper {
 
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
+                        
+                        <!-- NEW MATCHUP PANEL -->
+                        <div class="matchup-panel">
+                            <div class="current-batter">
+                                <span class="label">Now Batting</span>
+                                <div class="batter-name" id="current-batter-name">Loading...</div>
+                            </div>
+                        </div>
+
                         <div class="scoring-grid advanced">
                             <button class="btn-score btn-pitch" data-type="pitch" data-detail="ball">Ball</button>
                             <button class="btn-score btn-pitch" data-type="pitch" data-detail="strike">Strike</button>
@@ -99,6 +107,23 @@ export class Scorekeeper {
         const events = store.getEventsForGame(this.gameId);
         const { state, logs } = BaseballEngine.calculateState(events);
 
+        // --- DETERMINE CURRENT BATTER ---
+        const lineupArray = state.half === 'Top' ? this.game.awayLineup : this.game.homeLineup;
+        const batterIndex = state.half === 'Top' ? state.awayBatterIndex : state.homeBatterIndex;
+        
+        let batterDisplay = `Batter ${batterIndex + 1}`; // Fallback if no lineup exists
+        
+        if (lineupArray && lineupArray[batterIndex]) {
+            const playerId = lineupArray[batterIndex];
+            if (!playerId.startsWith('dummy')) {
+                const player = store.getPlayerById(playerId);
+                if (player) batterDisplay = `#${player.number} ${player.firstName} ${player.lastName}`;
+            }
+        }
+        
+        this.container.querySelector('#current-batter-name').textContent = batterDisplay;
+
+        // Update Scoreboard Elements
         this.container.querySelector('#away-score').textContent = state.awayScore;
         this.container.querySelector('#home-score').textContent = state.homeScore;
         this.container.querySelector('#inning-text').textContent = `${state.half} ${state.inning}`;
@@ -120,20 +145,13 @@ export class Scorekeeper {
     attachEventListeners() {
         this.container.querySelectorAll('.btn-score').forEach(btn => {
             if(btn.id === 'btn-undo') return; 
-            
             btn.addEventListener('click', (e) => {
-                const type = e.currentTarget.dataset.type;
-                const detail = e.currentTarget.dataset.detail;
-                store.addGameEvent(this.gameId, type, detail);
+                store.addGameEvent(this.gameId, e.currentTarget.dataset.type, e.currentTarget.dataset.detail);
             });
         });
 
-        this.container.querySelector('#btn-undo').addEventListener('click', () => {
-            store.undoLastGameEvent(this.gameId);
-        });
+        this.container.querySelector('#btn-undo').addEventListener('click', () => store.undoLastGameEvent(this.gameId));
     }
 
-    destroy() {
-        this.unsubscribes.forEach(unsub => unsub());
-    }
+    destroy() { this.unsubscribes.forEach(unsub => unsub()); }
 }
