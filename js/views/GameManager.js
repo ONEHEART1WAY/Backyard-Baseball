@@ -1,11 +1,10 @@
 import { store } from '../core/Store.js';
-import { Scorekeeper } from './Scorekeeper.js';
 
 export class GameManager {
     constructor(container, routerNavigateCallback) {
         this.container = container;
         this.unsubscribes = [];
-        this.routerNavigateCallback = routerNavigateCallback; // To programmatically launch scorekeeper
+        this.routerNavigateCallback = routerNavigateCallback;
         
         this.render();
         this.unsubscribes.push(store.subscribe('gamesUpdated', () => this.renderList()));
@@ -17,7 +16,6 @@ export class GameManager {
                 <div class="list-panel">
                     <div class="list-header">
                         <h3>Games</h3>
-                        <button class="btn btn-primary" id="btn-new-game">+ New Game</button>
                     </div>
                     <ul class="item-list" id="game-list"></ul>
                 </div>
@@ -35,7 +33,10 @@ export class GameManager {
                                 <select id="home-team" class="form-control" required></select>
                             </div>
                         </div>
-                        <div class="flex-row" style="margin-top: 30px;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+                            Lineups will be auto-generated from active rosters.
+                        </p>
+                        <div class="flex-row" style="margin-top: 20px;">
                             <button type="submit" class="btn btn-primary">Create & Score Game</button>
                         </div>
                     </form>
@@ -85,9 +86,23 @@ export class GameManager {
         const form = this.container.querySelector('#game-form');
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            const awayTeamId = this.container.querySelector('#away-team').value;
+            const homeTeamId = this.container.querySelector('#home-team').value;
+
+            // Auto-Generate Lineups from Rosters
+            const awayPlayers = store.getPlayersByTeam(awayTeamId) || [];
+            const homePlayers = store.getPlayersByTeam(homeTeamId) || [];
+
+            // Fill 1-9. If the roster doesn't have 9 guys, fill with "dummy" data
+            const awayLineup = Array(9).fill(null).map((_, i) => awayPlayers[i] ? awayPlayers[i].id : `dummy-away-${i}`);
+            const homeLineup = Array(9).fill(null).map((_, i) => homePlayers[i] ? homePlayers[i].id : `dummy-home-${i}`);
+
             const gameId = store.saveGame({
-                awayTeamId: this.container.querySelector('#away-team').value,
-                homeTeamId: this.container.querySelector('#home-team').value
+                awayTeamId,
+                homeTeamId,
+                awayLineup,
+                homeLineup
             });
             this.routerNavigateCallback('scorekeeper', gameId);
         });
