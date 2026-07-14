@@ -1,9 +1,11 @@
 export class BaseballEngine {
-    static calculateState(events) {
+    // --- UPDATED: Accept lineup lengths to support "Bat the Roster" ---
+    static calculateState(events, awayLineupLength = 9, homeLineupLength = 9) {
         let state = {
             inning: 1, half: 'Top', outs: 0, balls: 0, strikes: 0,
             awayScore: 0, homeScore: 0, bases: { 1: false, 2: false, 3: false },
-            awayBatterIndex: 0, homeBatterIndex: 0
+            awayBatterIndex: 0, homeBatterIndex: 0,
+            awayLineupLength, homeLineupLength // Store them in state for advanceBatter to read
         };
         let logs = [];
 
@@ -26,7 +28,7 @@ export class BaseballEngine {
                     state.strikes++;
                     if (state.strikes === 3) {
                         logs.unshift({ type: 'out', text: `${prefix} Strikeout.` });
-                        this.advanceBatter(state); // Advance before the out potentially flips the inning
+                        this.advanceBatter(state); 
                         this.handleOut(state);
                         state.balls = 0; state.strikes = 0;
                     } else {
@@ -89,12 +91,12 @@ export class BaseballEngine {
         return { state, logs };
     }
 
-    // --- NEW: Cycles the 1-9 batting order ---
+    // --- UPDATED: Uses dynamic lengths instead of a hardcoded 9 ---
     static advanceBatter(state) {
         if (state.half === 'Top') {
-            state.awayBatterIndex = (state.awayBatterIndex + 1) % 9;
+            state.awayBatterIndex = (state.awayBatterIndex + 1) % state.awayLineupLength;
         } else {
-            state.homeBatterIndex = (state.homeBatterIndex + 1) % 9;
+            state.homeBatterIndex = (state.homeBatterIndex + 1) % state.homeLineupLength;
         }
     }
 
