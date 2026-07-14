@@ -483,3 +483,29 @@ body {
     margin-bottom: 8px;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
 }
+.matchup-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.current-batter .label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.current-batter .batter-name {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
