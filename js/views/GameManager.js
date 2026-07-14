@@ -34,7 +34,7 @@ export class GameManager {
                             </div>
                         </div>
                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
-                            Lineups will be auto-generated from active rosters.
+                            The entire active roster will be placed in the batting order.
                         </p>
                         <div class="flex-row" style="margin-top: 20px;">
                             <button type="submit" class="btn btn-primary">Create & Score Game</button>
@@ -93,9 +93,10 @@ export class GameManager {
             const awayPlayers = store.getPlayersByTeam(awayTeamId) || [];
             const homePlayers = store.getPlayersByTeam(homeTeamId) || [];
 
-            // Fill 1-9. If the roster doesn't have 9 guys, fill with "dummy" data
-            const awayLineup = Array(9).fill(null).map((_, i) => awayPlayers[i] ? awayPlayers[i].id : `dummy-away-${i}`);
-            const homeLineup = Array(9).fill(null).map((_, i) => homePlayers[i] ? homePlayers[i].id : `dummy-home-${i}`);
+            // --- UPDATED: Bat the whole roster ---
+            // If the roster is empty, provide a fallback "dummy" so the engine doesn't divide by zero
+            const awayLineup = awayPlayers.length > 0 ? awayPlayers.map(p => p.id) : ['dummy-away-0'];
+            const homeLineup = homePlayers.length > 0 ? homePlayers.map(p => p.id) : ['dummy-home-0'];
 
             const gameId = store.saveGame({
                 awayTeamId,
