@@ -631,7 +631,8 @@ body {
     position: relative;
     width: 34px;
     height: 34px;
-    transform: rotate(45deg); /* Tilted 45 degrees to look like a diamond */
+    transform: rotate(45deg); /* Tilts the container */
+    margin: 5px; /* Added slight margin to prevent clipping */
 }
 
 .diamond .base {
@@ -648,7 +649,6 @@ body {
     box-shadow: 0 0 8px rgba(234, 179, 8, 0.6); /* Glow effect */
 }
 
-/* Positioning bases in the tilted square */
 .diamond .base-1 { bottom: 0; right: 0; }
 .diamond .base-2 { top: 0; right: 0; }
 .diamond .base-3 { top: 0; left: 0; }
