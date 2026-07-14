@@ -9,7 +9,7 @@ export class GameManager {
         this.render();
         this.unsubscribes.push(store.subscribe('gamesUpdated', () => this.renderList()));
     }
-
+    
     render() {
         this.container.innerHTML = `
             <div class="split-view">
