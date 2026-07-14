@@ -2,7 +2,8 @@ export class BaseballEngine {
     static calculateState(events) {
         let state = {
             inning: 1, half: 'Top', outs: 0, balls: 0, strikes: 0,
-            awayScore: 0, homeScore: 0, bases: { 1: false, 2: false, 3: false }
+            awayScore: 0, homeScore: 0, bases: { 1: false, 2: false, 3: false },
+            awayBatterIndex: 0, homeBatterIndex: 0 // Keep track of whose turn it is
         };
         let logs = [];
 
@@ -15,6 +16,7 @@ export class BaseballEngine {
                     if (state.balls === 4) {
                         logs.unshift({ type: 'hit', text: `${prefix} Walk.` });
                         this.handleWalk(state);
+                        this.advanceBatter(state);
                         state.balls = 0; state.strikes = 0;
                     } else {
                         logs.unshift({ type: 'pitch', text: `${prefix} Ball (${state.balls}-${state.strikes})` });
@@ -24,6 +26,7 @@ export class BaseballEngine {
                     state.strikes++;
                     if (state.strikes === 3) {
                         logs.unshift({ type: 'out', text: `${prefix} Strikeout.` });
+                        this.advanceBatter(state); // Advance before the out potentially flips the inning
                         this.handleOut(state);
                         state.balls = 0; state.strikes = 0;
                     } else {
@@ -40,6 +43,10 @@ export class BaseballEngine {
                 }
             } 
             else if (event.type === 'play') {
+                if (['out', 'dp', 'single', 'double', 'triple', 'hr', 'error'].includes(event.detail)) {
+                    this.advanceBatter(state);
+                }
+
                 if (event.detail === 'out') {
                     logs.unshift({ type: 'out', text: `${prefix} Batter grounded/flied out.` });
                     this.handleOut(state);
@@ -66,22 +73,29 @@ export class BaseballEngine {
                 }
                 else if (event.detail === 'error') {
                     logs.unshift({ type: 'action', text: `${prefix} Reached on Error.` });
-                    this.handleHit(state, 1); // Simplification: treats error like a single for advancement
+                    this.handleHit(state, 1); 
                 }
                 else if (event.detail === 'steal') {
                     logs.unshift({ type: 'action', text: `${prefix} Stolen Base.` });
                     this.handleAdvance(state, true);
                 }
 
-                // Reset count on any ball in play
                 if (['out', 'dp', 'single', 'double', 'triple', 'hr', 'error'].includes(event.detail)) {
-                    state.balls = 0;
-                    state.strikes = 0;
+                    state.balls = 0; state.strikes = 0;
                 }
             }
         });
 
         return { state, logs };
+    }
+
+    // --- NEW: Cycles the 1-9 batting order ---
+    static advanceBatter(state) {
+        if (state.half === 'Top') {
+            state.awayBatterIndex = (state.awayBatterIndex + 1) % 9;
+        } else {
+            state.homeBatterIndex = (state.homeBatterIndex + 1) % 9;
+        }
     }
 
     static handleOut(state) {
@@ -96,8 +110,7 @@ export class BaseballEngine {
 
     static handleDoublePlay(state) {
         this.handleOut(state);
-        if (state.outs > 0) this.handleOut(state); // Ensure inning didn't end on first out
-        // Clear lead runner as a basic rule for DP
+        if (state.outs > 0) this.handleOut(state); 
         if (state.bases[1]) state.bases[1] = false;
         else if (state.bases[2]) state.bases[2] = false;
         else if (state.bases[3]) state.bases[3] = false;
@@ -115,26 +128,26 @@ export class BaseballEngine {
     }
 
     static handleHit(state, bases) {
-        if (bases === 4) { // Home Run
+        if (bases === 4) { 
             if(state.bases[3]) this.scoreRun(state);
             if(state.bases[2]) this.scoreRun(state);
             if(state.bases[1]) this.scoreRun(state);
-            this.scoreRun(state); // Batter
+            this.scoreRun(state); 
             state.bases = {1:false, 2:false, 3:false};
         }
-        else if (bases === 3) { // Triple
+        else if (bases === 3) { 
             if(state.bases[3]) this.scoreRun(state);
             if(state.bases[2]) this.scoreRun(state);
             if(state.bases[1]) this.scoreRun(state);
             state.bases = {1:false, 2:false, 3:true};
         }
-        else if (bases === 2) { // Double
+        else if (bases === 2) { 
             if(state.bases[3]) this.scoreRun(state);
             if(state.bases[2]) this.scoreRun(state);
             if(state.bases[1]) { state.bases[3] = true; state.bases[1] = false; }
             state.bases[2] = true;
         }
-        else if (bases === 1) { // Single / Error
+        else if (bases === 1) { 
             if(state.bases[3]) { this.scoreRun(state); state.bases[3] = false; }
             if(state.bases[2]) { state.bases[3] = true; state.bases[2] = false; }
             if(state.bases[1]) { state.bases[2] = true; }
@@ -143,16 +156,13 @@ export class BaseballEngine {
     }
 
     static handleAdvance(state, isSteal = false) {
-        // Moves the lead runner up one base.
         if (state.bases[3]) { 
-            this.scoreRun(state); 
-            state.bases[3] = false; 
+            this.scoreRun(state); state.bases[3] = false; 
         } else if (state.bases[2]) { 
-            state.bases[3] = true; 
-            state.bases[2] = false; 
+            state.bases[3] = true; state.bases[2] = false; 
         } else if (state.bases[1]) { 
             state.bases[2] = true; 
-            if(isSteal) state.bases[1] = false; // Steal removes them from previous base
+            if(isSteal) state.bases[1] = false; 
         }
     }
 
