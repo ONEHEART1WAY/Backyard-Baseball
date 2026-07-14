@@ -17,6 +17,18 @@ class App {
     }
 
     init() {
+        // Add this to your entry point file
+        const urlParams = new URLSearchParams(window.location.search);
+        const isOverlay = urlParams.get('view') === 'overlay';
+        const gameId = urlParams.get('gameId');
+        
+        if (isOverlay && gameId) {
+            // Force clear page and load ONLY the scorekeeper
+            document.body.innerHTML = '<div id="app"></div>';
+            new Scorekeeper(document.getElementById('app'), gameId, true);
+        } else {
+            // ... load your normal app (GameManager, etc.) ...
+        }
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
