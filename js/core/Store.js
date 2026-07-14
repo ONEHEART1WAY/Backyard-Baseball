@@ -9,6 +9,7 @@ class Store {
             teams: [], players: [], roster_transactions: [],
             games: [], game_events: [], settings: { theme: 'dark' }
         };
+        this.saveTimeout = null; // NEW: Timer for debouncing saves
         this.load();
     }
 
@@ -23,11 +24,16 @@ class Store {
         this.save();
     }
 
+    // --- UPDATED: Background Save (Debounce) ---
+    // This stops the browser from freezing when the database gets large!
     save() {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.data));
-            this.publish('systemSaved', Date.now());
-        } catch (e) { console.error("Failed to save", e); }
+        if (this.saveTimeout) clearTimeout(this.saveTimeout);
+        
+        this.saveTimeout = setTimeout(() => {
+            try {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+            } catch (e) { console.error("Failed to save", e); }
+        }, 50); // Waits 50ms after your last click before writing to the hard drive
     }
 
     load() {
@@ -51,8 +57,6 @@ class Store {
 
     getPlayers() { return this.data.players || []; }
     getPlayerById(id) { return this.data.players.find(p => p.id === id); }
-    
-    // --- NEW: Get all players for a specific team ---
     getPlayersByTeam(teamId) {
         if (!this.data.roster_transactions) return [];
         return this.data.players.filter(p => {
