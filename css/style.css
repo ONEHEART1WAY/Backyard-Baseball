@@ -331,9 +331,9 @@ body {
     border-color: var(--accent-primary);
 }
 
-.base-1 { bottom: 0; right: 0; }
-.base-2 { top: 0; right: 0; }
-.base-3 { top: 0; left: 0; }
+.base-1 { top: 0; right: 0; }
+.base-2 { top: 0; left: 0; }
+.base-3 { left: 0; left: 0; }
 
 .scoring-grid {
     display: grid;
