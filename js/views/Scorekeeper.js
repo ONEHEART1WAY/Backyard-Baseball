@@ -61,7 +61,6 @@ export class Scorekeeper {
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
                         
-                        <!-- NEW MATCHUP PANEL -->
                         <div class="matchup-panel">
                             <div class="current-batter">
                                 <span class="label">Now Batting</span>
@@ -105,13 +104,17 @@ export class Scorekeeper {
 
     updateBoard() {
         const events = store.getEventsForGame(this.gameId);
-        const { state, logs } = BaseballEngine.calculateState(events);
+        
+        // --- UPDATED: Pass the dynamic lineup lengths into the Engine ---
+        const awayLen = this.game.awayLineup ? this.game.awayLineup.length : 1;
+        const homeLen = this.game.homeLineup ? this.game.homeLineup.length : 1;
+        
+        const { state, logs } = BaseballEngine.calculateState(events, awayLen, homeLen);
 
-        // --- DETERMINE CURRENT BATTER ---
         const lineupArray = state.half === 'Top' ? this.game.awayLineup : this.game.homeLineup;
         const batterIndex = state.half === 'Top' ? state.awayBatterIndex : state.homeBatterIndex;
         
-        let batterDisplay = `Batter ${batterIndex + 1}`; // Fallback if no lineup exists
+        let batterDisplay = `Batter ${batterIndex + 1}`; 
         
         if (lineupArray && lineupArray[batterIndex]) {
             const playerId = lineupArray[batterIndex];
