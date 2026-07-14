@@ -90,7 +90,6 @@ export class GameManager {
             const awayTeamId = this.container.querySelector('#away-team').value;
             const homeTeamId = this.container.querySelector('#home-team').value;
 
-            // Auto-Generate Lineups from Rosters
             const awayPlayers = store.getPlayersByTeam(awayTeamId) || [];
             const homePlayers = store.getPlayersByTeam(homeTeamId) || [];
 
