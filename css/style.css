@@ -649,6 +649,11 @@ body {
     box-shadow: 0 0 8px rgba(234, 179, 8, 0.6); /* Glow effect */
 }
 
-.diamond .base-1 { bottom: 0; right: 0; }
-.diamond .base-2 { top: 0; right: 0; }
-.diamond .base-3 { top: 0; left: 0; }
+/* 1st Base: Top-Right corner rotates to point Right */
+.diamond .base-1 { top: 0; right: 0; bottom: auto; left: auto; }
+
+/* 2nd Base: Top-Left corner rotates to point Top */
+.diamond .base-2 { top: 0; left: 0; bottom: auto; right: auto; }
+
+/* 3rd Base: Bottom-Left corner rotates to point Left */
+.diamond .base-3 { bottom: 0; left: 0; top: auto; right: auto; }
