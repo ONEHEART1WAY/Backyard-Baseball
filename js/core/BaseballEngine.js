@@ -5,7 +5,7 @@ export class BaseballEngine {
             inning: 1, half: 'Top', outs: 0, balls: 0, strikes: 0,
             awayScore: 0, homeScore: 0, bases: { 1: false, 2: false, 3: false },
             awayBatterIndex: 0, homeBatterIndex: 0,
-            awayLineupLength, homeLineupLength // Store them in state for advanceBatter to read
+            awayLineupLength, homeLineupLength 
         };
         let logs = [];
 
