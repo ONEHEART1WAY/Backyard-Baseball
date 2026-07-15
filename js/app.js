@@ -7,6 +7,22 @@ import { Scorekeeper } from './views/Scorekeeper.js';
 
 class App {
     constructor() {
+        // --- OBS OVERLAY INTERCEPTOR ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const isOverlay = urlParams.get('view') === 'overlay';
+        const gameId = urlParams.get('gameId');
+
+        if (isOverlay && gameId) {
+            // Wipe the entire page clean and setup the OBS container
+            document.body.innerHTML = '<div id="obs-container" style="width: 100vw; height: 100vh;"></div>';
+            // Load ONLY the Scorekeeper in overlay mode (the true at the end)
+            new Scorekeeper(document.getElementById('obs-container'), gameId, true);
+            // Return immediately to stop the rest of the normal app from loading
+            return;
+        }
+        // --- END OBS INTERCEPTOR ---
+
+        // Normal Application Setup (only runs if NOT in overlay mode)
         this.viewContainer = document.getElementById('app-view');
         this.viewTitle = document.getElementById('view-title');
         this.navLinks = document.querySelectorAll('.nav-links a');
@@ -17,18 +33,6 @@ class App {
     }
 
     init() {
-        // Add this to your entry point file
-        const urlParams = new URLSearchParams(window.location.search);
-        const isOverlay = urlParams.get('view') === 'overlay';
-        const gameId = urlParams.get('gameId');
-        
-        if (isOverlay && gameId) {
-            // Force clear page and load ONLY the scorekeeper
-            document.body.innerHTML = '<div id="app"></div>';
-            new Scorekeeper(document.getElementById('app'), gameId, true);
-        } else {
-            // ... load your normal app (GameManager, etc.) ...
-        }
         this.navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -38,13 +42,16 @@ class App {
         });
 
         store.subscribe('systemSaved', () => {
-            this.saveIndicator.style.color = 'var(--success)';
-            this.saveIndicator.textContent = 'All changes saved';
-            setTimeout(() => {
-                this.saveIndicator.style.color = 'var(--text-muted)';
-            }, 2000);
+            if (this.saveIndicator) {
+                this.saveIndicator.style.color = 'var(--success)';
+                this.saveIndicator.textContent = 'All changes saved';
+                setTimeout(() => {
+                    this.saveIndicator.style.color = 'var(--text-muted)';
+                }, 2000);
+            }
         });
 
+        // Load dashboard by default
         this.navigate('dashboard', null, this.navLinks[0]);
     }
 
@@ -52,13 +59,18 @@ class App {
         if (activeElement) {
             this.navLinks.forEach(l => l.classList.remove('active'));
             activeElement.classList.add('active');
-            this.viewTitle.textContent = activeElement.textContent;
+            if (this.viewTitle) {
+                this.viewTitle.textContent = activeElement.textContent;
+            }
         }
 
         if (this.currentView && typeof this.currentView.destroy === 'function') {
             this.currentView.destroy();
         }
-        this.viewContainer.innerHTML = '';
+        
+        if (this.viewContainer) {
+            this.viewContainer.innerHTML = '';
+        }
 
         // Pass a callback to GameManager so it can trigger navigation to the Scorekeeper
         const routerNav = (r, navId) => this.navigate(r, navId);
@@ -77,7 +89,7 @@ class App {
                 this.currentView = new GameManager(this.viewContainer, routerNav);
                 break;
             case 'scorekeeper':
-                this.viewTitle.textContent = "Live Scorekeeper"; // Override title
+                if (this.viewTitle) this.viewTitle.textContent = "Live Scorekeeper";
                 this.currentView = new Scorekeeper(this.viewContainer, id);
                 break;
         }
