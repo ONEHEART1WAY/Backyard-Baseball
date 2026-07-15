@@ -69,6 +69,10 @@ export class Scorekeeper {
         }
 
         // --- FULL SCORING APP MODE ---
+        // Generate the exact base URL dynamically (Done outside the template string!)
+        const baseUrl = window.location.href.split('?')[0].split('#')[0];
+        const obsLink = `${baseUrl}?view=overlay&gameId=${this.gameId}`;
+
         this.container.innerHTML = `
             <div style="max-width: 1200px; margin: 0 auto;">
                 
@@ -100,6 +104,16 @@ export class Scorekeeper {
                         </div>
                     </div>
                 </div>
+
+                <!-- OBS LINK GENERATOR -->
+                <div style="background: #1e1e1e; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                    <div>
+                        <span style="color: #888; font-size: 0.9rem; margin-right: 10px;">OBS Browser Source Link:</span>
+                        <code style="color: #0ea5e9; font-size: 0.9rem;">${obsLink}</code>
+                    </div>
+                    <button id="btn-copy-obs" data-link="${obsLink}" style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Copy Link</button>
+                </div>
+                <!-- END OBS LINK GENERATOR -->
 
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
@@ -193,7 +207,25 @@ export class Scorekeeper {
                 store.addGameEvent(this.gameId, e.currentTarget.dataset.type, e.currentTarget.dataset.detail);
             });
         });
+        
         this.container.querySelector('#btn-undo').addEventListener('click', () => store.undoLastGameEvent(this.gameId));
+
+        // Copy OBS Link Listener
+        const copyBtn = this.container.querySelector('#btn-copy-obs');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', (e) => {
+                const link = e.currentTarget.dataset.link;
+                navigator.clipboard.writeText(link).then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copied!';
+                    copyBtn.style.background = '#22c55e'; // turn green
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '#0ea5e9'; // turn back to blue
+                    }, 2000);
+                });
+            });
+        }
     }
 
     destroy() { this.unsubscribes.forEach(unsub => unsub()); }
