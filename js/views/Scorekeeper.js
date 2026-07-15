@@ -5,7 +5,7 @@ export class Scorekeeper {
     constructor(container, gameId, isOverlay = false) {
         this.container = container;
         this.gameId = gameId;
-        this.isOverlay = isOverlay; // Tracks if we are in OBS mode
+        this.isOverlay = isOverlay; // Tracks if we are in pop-out mode
         this.game = store.getGameById(gameId);
         this.unsubscribes = [];
         
@@ -29,36 +29,13 @@ export class Scorekeeper {
         const hText = homeTeam?.secondaryColor || '#ffffff';
         const hLogo = homeTeam?.logo ? `<img src="${homeTeam.logo}" style="height: 40px; margin-left: 15px; z-index: 1;">` : '';
 
-        // --- OBS OVERLAY MODE ---
+        // --- OBS POP-OUT MODE ---
         if (this.isOverlay) {
             this.container.innerHTML = `
                 <style>
-                    /* 1. Force the entire page and standard app wrappers to be transparent */
-                    html, body, #app, #root, main, .app-container { 
-                        background: transparent !important; 
-                        background-color: transparent !important; 
-                        margin: 0 !important; 
-                        padding: 0 !important; 
-                        overflow: hidden !important;
-                    }
-                    
-                    /* 2. Hide common layout elements that might load in the background */
-                    header, footer, nav, .sidebar { 
-                        display: none !important; 
-                    }
-
-                    /* 3. Float the scorebug so it breaks out of any app layout constraints */
-                    .obs-wrapper { 
-                        position: fixed; 
-                        top: 30px; /* Distance from top of stream */
-                        left: 0; 
-                        width: 100vw; 
-                        display: flex; 
-                        justify-content: center; 
-                        z-index: 999999;
-                    }
+                    .scorebug-container { padding: 20px; display: flex; justify-content: center; width: 100%; }
                 </style>
-                <div class="obs-wrapper">
+                <div class="scorebug-container">
                     <div class="scorebug" id="broadcast-scorebug">
                         <div class="team-panel away" style="--team-color: ${aBg}; --text-color: ${aText};">
                             ${aLogo}
@@ -87,11 +64,10 @@ export class Scorekeeper {
                     </div>
                 </div>
             `;
-            return; // Stop rendering here for OBS
+            return; // Stop rendering here for the pop-out window
         }
 
         // --- FULL SCORING APP MODE ---
-        // Safely generate URL keeping any routing hashes (#) intact so the app doesn't crash/redirect
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('view', 'overlay');
         currentUrl.searchParams.set('gameId', this.gameId);
@@ -101,7 +77,6 @@ export class Scorekeeper {
             <div style="max-width: 1200px; margin: 0 auto;">
                 
                 <div class="scorebug-container">
-                    <!-- Your normal app scorebug goes here (same as before) -->
                     <div class="scorebug" id="broadcast-scorebug">
                         <div class="team-panel away" style="--team-color: ${aBg}; --text-color: ${aText};">
                             ${aLogo}
@@ -130,15 +105,15 @@ export class Scorekeeper {
                     </div>
                 </div>
 
-                <!-- OBS LINK GENERATOR -->
+                <!-- OBS POP-OUT LAUNCHER -->
                 <div style="background: #1e1e1e; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
                     <div>
-                        <span style="color: #888; font-size: 0.9rem; margin-right: 10px;">OBS Browser Source Link:</span>
-                        <code style="color: #0ea5e9; font-size: 0.9rem;">${obsLink}</code>
+                        <span style="color: #888; font-size: 0.9rem; margin-right: 10px;">Broadcast Overlay:</span>
+                        <span style="color: #ccc; font-size: 0.8rem;">Pop out the scorebug to capture in OBS using Window Capture (Chroma Key Green).</span>
                     </div>
-                    <button id="btn-copy-obs" data-link="${obsLink}" style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Copy Link</button>
+                    <button id="btn-popout-obs" data-link="${obsLink}" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Launch Pop-Out</button>
                 </div>
-                <!-- END OBS LINK GENERATOR -->
+                <!-- END OBS POP-OUT LAUNCHER -->
 
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
@@ -189,7 +164,7 @@ export class Scorekeeper {
         
         const { state, logs } = BaseballEngine.calculateState(events, awayLen, homeLen);
 
-        // Update basic text (shared between both overlay and app)
+        // Update basic text
         this.container.querySelector('#away-score').textContent = state.awayScore;
         this.container.querySelector('#home-score').textContent = state.homeScore;
         this.container.querySelector('#inning-text').textContent = `${state.half.toUpperCase()} ${state.inning}`;
@@ -200,7 +175,7 @@ export class Scorekeeper {
         this.container.querySelector('#base-2').classList.toggle('occupied', state.bases[2]);
         this.container.querySelector('#base-3').classList.toggle('occupied', state.bases[3]);
 
-        // Only update the following if we are NOT in OBS overlay mode
+        // Only update the batter and play-by-play if NOT in pop-out mode
         if (!this.isOverlay) {
             const lineupArray = state.half === 'Top' ? this.game.awayLineup : this.game.homeLineup;
             const batterIndex = state.half === 'Top' ? state.awayBatterIndex : state.homeBatterIndex;
@@ -235,20 +210,13 @@ export class Scorekeeper {
         
         this.container.querySelector('#btn-undo').addEventListener('click', () => store.undoLastGameEvent(this.gameId));
 
-        // Copy OBS Link Listener
-        const copyBtn = this.container.querySelector('#btn-copy-obs');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', (e) => {
+        // Pop-out Window Launch Listener
+        const popoutBtn = this.container.querySelector('#btn-popout-obs');
+        if (popoutBtn) {
+            popoutBtn.addEventListener('click', (e) => {
                 const link = e.currentTarget.dataset.link;
-                navigator.clipboard.writeText(link).then(() => {
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = 'Copied!';
-                    copyBtn.style.background = '#22c55e'; // turn green
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.background = '#0ea5e9'; // turn back to blue
-                    }, 2000);
-                });
+                // Opens a neat, small window perfect for screen capturing
+                window.open(link, 'OBS_Overlay', 'width=1200,height=250,toolbar=0,menubar=0,location=0,status=0,scrollbars=0,resizable=1');
             });
         }
     }
