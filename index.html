@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiamondOS | Baseball Operations</title>
     
-    <!-- EARLY INTERCEPTOR FOR OBS -->
-    <!-- This runs before the page even exists, instantly making the background transparent -->
+    <!-- EARLY INTERCEPTOR FOR OBS GREEN SCREEN -->
+    <!-- This runs before the page even exists, instantly making the background Chroma Key Green -->
     <script>
         const params = new URLSearchParams(window.location.search);
         if (params.get('view') === 'overlay') {
-            document.write('<style>html, body, .app-container { background: transparent !important; background-color: transparent !important; display: block !important; margin: 0; padding: 0; }</style>');
+            document.write('<style>html, body, .app-container { background: #00FF00 !important; background-color: #00FF00 !important; display: block !important; margin: 0; padding: 0; overflow: hidden; }</style>');
         }
     </script>
 
