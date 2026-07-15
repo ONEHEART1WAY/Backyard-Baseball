@@ -5,15 +5,40 @@ export class Scorekeeper {
     constructor(container, gameId, isOverlay = false) {
         this.container = container;
         this.gameId = gameId;
-        this.isOverlay = isOverlay; // Tracks if we are in pop-out mode
+        this.isOverlay = isOverlay; 
         this.game = store.getGameById(gameId);
         this.unsubscribes = [];
         
+        // --- THE "WALKIE TALKIE" CHANNEL ---
+        // This allows the main window and pop-out window to instantly talk to each other
+        this.channel = new BroadcastChannel('diamondos_score_sync');
+        this.remoteEvents = null; 
+
+        if (this.isOverlay) {
+            // If this is the pop-out window, listen for the radio signal from the main window
+            this.channel.onmessage = (event) => {
+                if (event.data.type === 'UPDATE_BOARD' && event.data.gameId === this.gameId) {
+                    this.remoteEvents = event.data.events; // Catch the new events
+                    this.updateBoard(); // Update the screen immediately!
+                }
+            };
+        }
+
         this.render();
         this.updateBoard();
 
         this.unsubscribes.push(store.subscribe(`gameEventAdded_${this.gameId}`, () => {
             this.updateBoard();
+            
+            // If this is the MAIN window, broadcast the new score to the pop-out window
+            if (!this.isOverlay) {
+                const latestEvents = store.getEventsForGame(this.gameId);
+                this.channel.postMessage({
+                    type: 'UPDATE_BOARD',
+                    gameId: this.gameId,
+                    events: latestEvents
+                });
+            }
         }));
     }
 
@@ -64,7 +89,7 @@ export class Scorekeeper {
                     </div>
                 </div>
             `;
-            return; // Stop rendering here for the pop-out window
+            return;
         }
 
         // --- FULL SCORING APP MODE ---
@@ -113,7 +138,6 @@ export class Scorekeeper {
                     </div>
                     <button id="btn-popout-obs" data-link="${obsLink}" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Launch Pop-Out</button>
                 </div>
-                <!-- END OBS POP-OUT LAUNCHER -->
 
                 <div class="scorekeeper-layout">
                     <div class="scoring-panel">
@@ -158,7 +182,9 @@ export class Scorekeeper {
     }
 
     updateBoard() {
-        const events = store.getEventsForGame(this.gameId);
+        // Use the remote events if we are the pop-out window, otherwise fetch from the store normally
+        const events = (this.isOverlay && this.remoteEvents) ? this.remoteEvents : store.getEventsForGame(this.gameId);
+        
         const awayLen = this.game.awayLineup ? this.game.awayLineup.length : 1;
         const homeLen = this.game.homeLineup ? this.game.homeLineup.length : 1;
         
@@ -210,16 +236,17 @@ export class Scorekeeper {
         
         this.container.querySelector('#btn-undo').addEventListener('click', () => store.undoLastGameEvent(this.gameId));
 
-        // Pop-out Window Launch Listener
         const popoutBtn = this.container.querySelector('#btn-popout-obs');
         if (popoutBtn) {
             popoutBtn.addEventListener('click', (e) => {
                 const link = e.currentTarget.dataset.link;
-                // Opens a neat, small window perfect for screen capturing
                 window.open(link, 'OBS_Overlay', 'width=1200,height=250,toolbar=0,menubar=0,location=0,status=0,scrollbars=0,resizable=1');
             });
         }
     }
 
-    destroy() { this.unsubscribes.forEach(unsub => unsub()); }
+    destroy() { 
+        this.unsubscribes.forEach(unsub => unsub()); 
+        if (this.channel) this.channel.close(); // Hang up the walkie-talkie when navigating away
+    }
 }
