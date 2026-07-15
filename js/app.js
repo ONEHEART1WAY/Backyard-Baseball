@@ -5,6 +5,30 @@ import { PlayerManager } from './views/PlayerManager.js';
 import { GameManager } from './views/GameManager.js';
 import { Scorekeeper } from './views/Scorekeeper.js';
 
+// 1. Get the URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const view = urlParams.get('view');
+const gameId = urlParams.get('gameId');
+
+// 2. Immediate Check: If this is an overlay request, bypass the dashboard entirely
+if (view === 'overlay' && gameId) {
+    // Import your Scorekeeper class here if you haven't globally
+    // import { Scorekeeper } from './views/Scorekeeper.js'; 
+    
+    // Clear the document body immediately so the Dashboard HTML never exists
+    document.body.innerHTML = '<div id="app"></div>';
+    
+    // Initialize ONLY the Scorekeeper
+    const container = document.getElementById('app');
+    new Scorekeeper(container, gameId, true); // 'true' sets isOverlay mode
+    
+    // Stop the rest of the script from executing
+    throw new Error("Overlay mode active: Dashboard loading aborted.");
+}
+
+// 3. Otherwise, continue with your normal app startup/router below...
+// initMyApp();
+
 class App {
     constructor() {
         // --- OBS OVERLAY INTERCEPTOR ---
