@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DiamondOS | Baseball Operations</title>
+    
+    <!-- EARLY INTERCEPTOR FOR OBS -->
+    <!-- This runs before the page even exists, instantly making the background transparent -->
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'overlay') {
+            document.write('<style>html, body, .app-container { background: transparent !important; background-color: transparent !important; display: block !important; margin: 0; padding: 0; }</style>');
+        }
+    </script>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
