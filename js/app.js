@@ -35,7 +35,6 @@ class App {
             }
         });
 
-        // Load dashboard by default
         this.navigate('dashboard', null, this.navLinks[0]);
     }
 
