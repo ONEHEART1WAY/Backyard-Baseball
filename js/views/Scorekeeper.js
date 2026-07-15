@@ -33,10 +33,32 @@ export class Scorekeeper {
         if (this.isOverlay) {
             this.container.innerHTML = `
                 <style>
-                    body { background: transparent !important; margin: 0; padding: 0; overflow: hidden; }
-                    .scorebug-container { padding: 20px; display: flex; justify-content: center; }
+                    /* 1. Force the entire page and standard app wrappers to be transparent */
+                    html, body, #app, #root, main, .app-container { 
+                        background: transparent !important; 
+                        background-color: transparent !important; 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                        overflow: hidden !important;
+                    }
+                    
+                    /* 2. Hide common layout elements that might load in the background */
+                    header, footer, nav, .sidebar { 
+                        display: none !important; 
+                    }
+
+                    /* 3. Float the scorebug so it breaks out of any app layout constraints */
+                    .obs-wrapper { 
+                        position: fixed; 
+                        top: 30px; /* Distance from top of stream */
+                        left: 0; 
+                        width: 100vw; 
+                        display: flex; 
+                        justify-content: center; 
+                        z-index: 999999;
+                    }
                 </style>
-                <div class="scorebug-container">
+                <div class="obs-wrapper">
                     <div class="scorebug" id="broadcast-scorebug">
                         <div class="team-panel away" style="--team-color: ${aBg}; --text-color: ${aText};">
                             ${aLogo}
@@ -69,14 +91,17 @@ export class Scorekeeper {
         }
 
         // --- FULL SCORING APP MODE ---
-        // Generate the exact base URL dynamically (Done outside the template string!)
-        const baseUrl = window.location.href.split('?')[0].split('#')[0];
-        const obsLink = `${baseUrl}?view=overlay&gameId=${this.gameId}`;
+        // Safely generate URL keeping any routing hashes (#) intact so the app doesn't crash/redirect
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('view', 'overlay');
+        currentUrl.searchParams.set('gameId', this.gameId);
+        const obsLink = currentUrl.toString();
 
         this.container.innerHTML = `
             <div style="max-width: 1200px; margin: 0 auto;">
                 
                 <div class="scorebug-container">
+                    <!-- Your normal app scorebug goes here (same as before) -->
                     <div class="scorebug" id="broadcast-scorebug">
                         <div class="team-panel away" style="--team-color: ${aBg}; --text-color: ${aText};">
                             ${aLogo}
