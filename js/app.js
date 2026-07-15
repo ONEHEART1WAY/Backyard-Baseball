@@ -35,6 +35,7 @@ class App {
             }
         });
 
+        // Load dashboard by default
         this.navigate('dashboard', null, this.navLinks[0]);
     }
 
@@ -81,14 +82,14 @@ class App {
 
 // Initialize application when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // --- OBS OVERLAY GATEKEEPER ---
+    // --- OBS POP-OUT GATEKEEPER ---
     const urlParams = new URLSearchParams(window.location.search);
     const isOverlay = urlParams.get('view') === 'overlay';
     const gameId = urlParams.get('gameId');
 
     if (isOverlay && gameId) {
-        // Wipe the entire page clean and setup the transparent OBS container
-        document.body.innerHTML = '<div id="obs-container" style="width: 100vw; height: 100vh; overflow: hidden; background: transparent;"></div>';
+        // Wipe the entire page clean and setup the green screen container
+        document.body.innerHTML = '<div id="obs-container" style="width: 100vw; height: 100vh; overflow: hidden; background: #00FF00;"></div>';
         
         // Load ONLY the Scorekeeper in overlay mode
         new Scorekeeper(document.getElementById('obs-container'), gameId, true);
